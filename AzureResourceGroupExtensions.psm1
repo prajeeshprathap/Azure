@@ -188,9 +188,9 @@ function New-AzureVMInRG
 	$publicIP = EnsurePublicIPAddress $NICName $DNSDomainNameLabel $ResourceGroupName $Location
 	$nic = EnsureAzureNetworkInterface $NICName $publicIP $VNetName $ResourceGroupName $Location
 	
-	#$availabilitySet = EnsureAvailabilitySet -$AvailabilitySetName $ResourceGroupName $Location
+	$availabilitySet = EnsureAvailabilitySet -$AvailabilitySetName $ResourceGroupName $Location
 
-	#$vmConfig = New-AzureVMConfig -VMName $VMName -VMSize $VMSize -AvailabilitySetId $availabilitySet.Id
+	$vmConfig = New-AzureVMConfig -VMName $VMName -VMSize $VMSize -AvailabilitySetId $availabilitySet.Id
 	$vmConfig = New-AzureVMConfig -VMName $VMName -VMSize $VMSize
 	$credentials = Get-Credential -Message "Provide the name and password for the local administrator on the virtual machine."
 	$vmConfig = Set-AzureVMOperatingSystem -VM $vmConfig -Windows -ComputerName $VMName -Credential $credentials -ProvisionVMAgent -EnableAutoUpdate
@@ -202,4 +202,38 @@ function New-AzureVMInRG
 	New-AzureVM -ResourceGroupName $ResourceGroupName -Location $Location -VM $vmConfig
 }
 
-Export-ModuleMember -Function New*
+
+function Get-VMRemoteDesktopFile
+{
+	param
+	(
+		[Parameter(Mandatory=$true, Position = 0)]
+		[Parameter(ParameterSetName = "VMName")]
+		[string] $VMName,
+		
+		[Parameter(Mandatory=$true, Position = 0, ValueFromPipeline = $true)]
+		[Parameter(ParameterSetName = "VM")]
+		[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine] $VM,
+
+		[Parameter(Mandatory=$true, Position = 1)]
+		[ValidateNotNullOrEmpty()]
+		[ValidateScript({(Split-Path $_ -leaf).EndsWith("rdp") })]
+		[string] $Path
+	)
+	$folder = Split-Path -Path $Path -Parent
+	if(-not (Test-Path $folder))
+	{
+		New-Item -Path $folder -ItemType Directory -Force | Out-Null
+	}
+
+	if($PSCmdlet.ParameterSetName -eq "VMName")
+	{
+		Get-AzureVM |? {$_.Name -eq $VMName} | Get-AzureRemoteDesktopFile -LocalPath $Path
+	}
+	else
+	{
+		$VM | Get-AzureRemoteDesktopFile -LocalPath $Path
+	}
+}
+
+Export-ModuleMember -Function New*, Get*

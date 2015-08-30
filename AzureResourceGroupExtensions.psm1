@@ -188,9 +188,9 @@ function New-AzureVMInRG
 	$publicIP = EnsurePublicIPAddress $NICName $DNSDomainNameLabel $ResourceGroupName $Location
 	$nic = EnsureAzureNetworkInterface $NICName $publicIP $VNetName $ResourceGroupName $Location
 	
-	$availabilitySet = EnsureAvailabilitySet -$AvailabilitySetName $ResourceGroupName $Location
+	#$availabilitySet = EnsureAvailabilitySet -$AvailabilitySetName $ResourceGroupName $Location
 
-	$vmConfig = New-AzureVMConfig -VMName $VMName -VMSize $VMSize -AvailabilitySetId $availabilitySet.Id
+	#$vmConfig = New-AzureVMConfig -VMName $VMName -VMSize $VMSize -AvailabilitySetId $availabilitySet.Id
 	$vmConfig = New-AzureVMConfig -VMName $VMName -VMSize $VMSize
 	$credentials = Get-Credential -Message "Provide the name and password for the local administrator on the virtual machine."
 	$vmConfig = Set-AzureVMOperatingSystem -VM $vmConfig -Windows -ComputerName $VMName -Credential $credentials -ProvisionVMAgent -EnableAutoUpdate
